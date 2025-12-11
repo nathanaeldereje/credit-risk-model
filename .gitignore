@@ -1,0 +1,31 @@
+# Virtual environment
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+# *.ipynb
+
+# Data
+# === DATA FILES (never commit large files) ===
+data/
+!data/raw/*.dvc           # ← ALLOW .dvc pointer files in raw
+!data/processed/*.dvc       # ← ALLOW .dvc pointer files in processed
+!data/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+# .vscode/
+# .idea/
+
+# MLflow
+mlruns/
