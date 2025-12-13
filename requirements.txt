@@ -26,4 +26,4 @@ flake8>=7.1.0
 
 
 # additional
-pip install pyarrow==14.0.1
+pyarrow==14.0.1
