@@ -19,7 +19,7 @@ flake8>=7.1.0
 
 # (Add these later when you reach MLflow & FastAPI)
 # mlflow>=2.15.0
-# fastapi>=0.115.0
+fastapi>=0.115.0
 # uvicorn[standard]>=0.30.0
 
 
