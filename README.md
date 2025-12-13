@@ -43,6 +43,29 @@ In a regulated environment, we must balance:
 *Strategy: We prioritize interpretability while using ensemble methods where performance gains are significant, ensuring all model decisions are thoroughly documented.*
 
 ---
+## Top 5 Key Insights from EDA (Task 2 Deliverable)
+
+1. **Severe Class Imbalance in Target**  
+   Only 193 fraud cases out of 95,662 transactions → **0.20% fraud rate**. This confirms the need for a proxy target (RFM-based disengagement) instead of using FraudResult directly.
+
+2. **Amount vs Value Relationship & Hidden Fees**  
+   - 39.9% of transactions have negative Amount (refunds/cash-ins)  
+   - In 2.68% of cases, `Value > |Amount|` → this difference is a **transaction fee/commission** (0.55–5,400 UGX)  
+   → **Strong behavioral signal**: customers paying higher fees may be higher-risk or higher-value
+
+3. **Extreme Right-Skew in Transaction Amounts**  
+   Most transactions are small (< 10,000 UGX), but a long tail exists up to 98.8 million UGX. Log transformation clearly needed for modeling.
+
+4. **Dominant Categories & Channels**  
+   - Top 2 ProductCategories (financial_services + airtime) = 94% of volume  
+   - ChannelId_3 (likely USSD) dominates with 59%, ChannelId_2 (web/app) with 39%  
+   → Clear customer segments emerging
+
+5. **Single Country & Currency**  
+   All transactions are in Uganda (CountryCode 256, Currency UGX) → we can safely drop these columns.
+
+**Bonus Insight**: Average customer has ~25 transactions over ~19 active days — perfect for RFM segmentation.
+---
 
 ## Project Structure
 
@@ -105,7 +128,7 @@ uvicorn src.api.main:app --reload
 | Task | Status | Notes |
 | :--- | :--- | :--- |
 | **Task 1 – Business Understanding** | ✅ Completed | README section written |
-| **Task 2 – EDA** | 🟡 In Progress | Notebook ready, key insights being finalized |
+| **Task 2 – EDA** | ✅ Completed | Notebook ready, key insights finalized |
 | **Task 3 – Feature Engineering** | 📅 Planned | RFM + WoE/IV pipeline next |
 | **Task 4 – Proxy Target** | 📅 Planned | RFM clustering & high-risk label |
 | **Task 5 – Model Training** | 📅 Planned | MLflow setup + multiple models |
