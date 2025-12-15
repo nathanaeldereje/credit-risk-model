@@ -59,7 +59,7 @@ def aggregate_customer_features(df):
         'is_negative_amount': 'sum',
         'tx_hour': 'mean',
         'tx_day': 'mean',
-        'TransactionStartTime': 'max'
+        'TransactionStartTime': ['max', 'min']  # <-- Add 'min' here
     }
     
     customer_df = df.groupby('CustomerId').agg(aggs)
@@ -72,7 +72,8 @@ def aggregate_customer_features(df):
         'Amount_abs_std': 'std_amount',
         'value_diff_mean': 'avg_fee_paid',
         'is_negative_amount_sum': 'total_refunds_count',
-        'TransactionStartTime_max': 'last_transaction_time'
+        'TransactionStartTime_max': 'last_transaction_time',
+        'TransactionStartTime_min': 'first_transaction_time'
     }
     customer_df.rename(columns=rename_map, inplace=True)
     customer_df['std_amount'] = customer_df['std_amount'].fillna(0)
