@@ -94,7 +94,7 @@ credit-risk-model/
 └── README.md
 ```
 ## Tech Stack
-- Core: Python 3.10+, pandas, numpy
+- Core: Python 3.12, pandas, numpy
 - ML: scikit-learn, xgboost, lightgbm
 - Tracking: mlflow (Experiment tracking & Model Registry)
 - API: fastapi, uvicorn
@@ -124,12 +124,12 @@ python src/train.py
 # Start the API locally
 uvicorn src.api.main:app --reload
 ```
-## Current Progress
+## Current Progress(as of December 15, 2025)
 | Task | Status | Notes |
 | :--- | :--- | :--- |
 | **Task 1 – Business Understanding** | ✅ Completed | README section written |
 | **Task 2 – EDA** | ✅ Completed | Notebook ready, key insights finalized |
-| **Task 3 – Feature Engineering** | 📅 Planned | RFM + WoE/IV pipeline next |
+| **Task 3 – Feature Engineering** | ✅ Completed | Robust pipeline with aggregates, WoE/IV, logging |
 | **Task 4 – Proxy Target** | 📅 Planned | RFM clustering & high-risk label |
 | **Task 5 – Model Training** | 📅 Planned | MLflow setup + multiple models |
 | **Task 6 – Deployment & CI/CD** | 📅 Planned | FastAPI, Docker, GitHub Actions |
