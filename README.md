@@ -67,6 +67,27 @@ In a regulated environment, we must balance:
 **Bonus Insight**: Average customer has ~25 transactions over ~19 active days — perfect for RFM segmentation.
 ---
 
+## Proxy Target Creation (Task 4 Summary)
+
+Since the dataset contains no direct "default" or "credit risk" label, we engineered a **behavioral proxy target** called `is_high_risk` to enable supervised learning.
+
+### Approach
+- Calculated **RFM metrics** for each customer:
+  - **Recency**: Days since last transaction (snapshot date = last transaction date + 1 day)
+  - **Frequency**: Total number of transactions
+  - **Monetary**: Total absolute transaction amount (`total_amount`)
+- Applied **log transformation** (`log1p`) to handle extreme skew in Frequency and Monetary
+- **Standardized** the transformed RFM features
+- Performed **K-Means clustering** (k=3, `random_state=42`) on scaled RFM data
+- Analyzed cluster profiles and identified the **high-risk cluster** as the one with the **lowest Monetary value** (strongly correlated with low Frequency and high Recency — classic disengagement pattern)
+- Assigned `is_high_risk = 1` to customers in the high-risk cluster, `0` otherwise
+
+### Result
+- High-risk customers represent approximately **XX%** of the population (exact % shown when script is run)
+- Final dataset saved as `data/processed/customer_features_with_target.csv` (or .parquet), ready for model training
+
+This proxy enables us to train predictive models that estimate default probability based on behavioral disengagement — a standard and effective approach in alternative credit scoring when true default labels are unavailable.
+---
 ## Project Structure
 
 ```text
@@ -104,25 +125,37 @@ credit-risk-model/
 
 ## Quick Start
 ```bash
+## Quick Start
+```bash
+# Clone the repository
 git clone https://github.com/your-username/credit-risk-model.git
 cd credit-risk-model
 
-# Create virtual environment
+# Create and activate virtual environment
 python -m venv .venv
-source .venv/bin/activate    # Windows: .venv\Scripts\activate
+source .venv/bin/activate          # On Linux/Mac
+# .venv\Scripts\activate           # On Windows
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Download raw data to data/raw/ (from Kaggle or provided link)
-# Then run feature engineering
+# Place the raw Xente dataset in data/raw/data.csv
+# (Download from Kaggle: https://www.kaggle.com/competitions/xente-fraud-detection/data or provided link)
+
+# Step 1: Run feature engineering (Task 3)
 python src/data_processing.py
+# → Generates data/processed/customer_features.csv
 
-# Train models and log to MLflow
-python src/train.py
+# Step 2: Create proxy target via RFM clustering (Task 4)
+python src/create_proxy_target.py
+# → Generates data/processed/customer_features_with_target.csv (or .parquet)
+#    with the binary target 'is_high_risk'
 
-# Start the API locally
-uvicorn src.api.main:app --reload
+# Step 3: Train models with MLflow tracking (Task 5 - coming next)
+# python src/train.py
+
+# Step 4: Start the FastAPI service locally (Task 6 - coming next)
+# uvicorn src.api.main:app --reload
 ```
 ## Current Progress(as of December 15, 2025)
 | Task | Status | Notes |
@@ -130,9 +163,9 @@ uvicorn src.api.main:app --reload
 | **Task 1 – Business Understanding** | ✅ Completed | README section written |
 | **Task 2 – EDA** | ✅ Completed | Notebook ready, key insights finalized |
 | **Task 3 – Feature Engineering** | ✅ Completed | Robust pipeline with aggregates, WoE/IV, logging |
-| **Task 4 – Proxy Target** | 📅 Planned | RFM clustering & high-risk label |
+| **Task 4 – Proxy Target** | ✅ Completed | RFM clustering & high-risk label |
 | **Task 5 – Model Training** | 📅 Planned | MLflow setup + multiple models |
 | **Task 6 – Deployment & CI/CD** | 📅 Planned | FastAPI, Docker, GitHub Actions |
 
-Challenge completed – Dec _ 2025
+Challenge completed – Dec 16 2025
 Built by Nathanael Dereje
