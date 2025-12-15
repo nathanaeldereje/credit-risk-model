@@ -125,8 +125,6 @@ credit-risk-model/
 
 ## Quick Start
 ```bash
-## Quick Start
-```bash
 # Clone the repository
 git clone https://github.com/your-username/credit-risk-model.git
 cd credit-risk-model
@@ -141,17 +139,12 @@ pip install -r requirements.txt
 
 # Place the raw Xente dataset in data/raw/data.csv
 # (Download from Kaggle: https://www.kaggle.com/competitions/xente-fraud-detection/data or provided link)
-
 # Step 1: Run feature engineering (Task 3)
-
 python src/data_processing.py
-
 # → Generates data/processed/customer_features.csv
 
 # Step 2: Create proxy target via RFM clustering (Task 4)
-
 python src/create_proxy_target.py
-
 # → Generates data/processed/customer_features_with_target.csv (or .parquet)
 #    with the binary target 'is_high_risk'
 
