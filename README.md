@@ -167,6 +167,12 @@ Place the raw Xente dataset in data/raw/data.csv
 - Step 4: Start the FastAPI service locally (Task 6)
 ```bash 
    uvicorn src.api.main:app --reload
+   # → API available at http://127.0.0.1:8000/docs
+#    Test: POST to /predict with customer features
+   
+# Alternative: Run with Docker (Task 6)
+docker-compose up --build
+# → API available at http://localhost:8000
 ```
 
 ---
