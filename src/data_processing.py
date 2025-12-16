@@ -99,42 +99,43 @@ def add_categorical_modes(df_transactions, df_customers):
 def get_transformation_pipeline(df):
     """
     Builds the Sklearn Pipeline for Scaling and Encoding.
-    Returns the preprocessor object.
+    Explicitly defines categorical columns to prevent type errors.
     """
     logging.info("Building Transformation Pipeline...")
     
-    # 1. Identify Columns
-    # Numeric: All number columns except CustomerId (index) and the target
-    numeric_features = [col for col in df.select_dtypes(include=np.number).columns 
-                        if col not in ['CustomerId', 'is_high_risk']]
+    # 1. Explicitly identify Categorical Columns
+    # We hardcode these to ensure the pipeline never treats them as numeric
+    categorical_features = ['ProviderId', 'ProductCategory', 'ChannelId', 'PricingStrategy']
+    # Filter to ensure they actually exist in the dataframe passed
+    categorical_features = [col for col in categorical_features if col in df.columns]
     
-    # Categorical: Object columns
-    categorical_features = [col for col in df.select_dtypes(include=['object', 'category']).columns 
-                            if col not in ['CustomerId']]
+    # 2. Identify Numeric Columns
+    # Select all numbers, but EXCLUDE the IDs, Target, and the known Categoricals
+    numeric_features = [col for col in df.select_dtypes(include=np.number).columns 
+                        if col not in ['CustomerId', 'is_high_risk'] 
+                        and col not in categorical_features]
 
     logging.info(f"Numeric features to scale: {len(numeric_features)}")
     logging.info(f"Categorical features to encode: {len(categorical_features)}")
 
-    # 2. Define Transformers
-    # Numeric: Impute Median -> Standardize
+    # 3. Define Transformers
     numeric_transformer = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='median')),
         ('scaler', StandardScaler())
     ])
 
-    # Categorical: Impute 'Missing' -> OneHotEncode
     categorical_transformer = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
-        ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False)) # sparse=False for easier DF conversion
+        ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
     ])
 
-    # 3. Combine into ColumnTransformer
+    # 4. Combine into ColumnTransformer
     preprocessor = ColumnTransformer(
         transformers=[
             ('num', numeric_transformer, numeric_features),
             ('cat', categorical_transformer, categorical_features)
         ],
-        verbose_feature_names_out=False # Keeps column names clean in newer sklearn versions
+        verbose_feature_names_out=False
     )
     
     return preprocessor
