@@ -141,12 +141,6 @@ def train_and_evaluate(data_path):
                 best_overall_model = best_model
                 
     logging.info(f"Training Complete. Best Overall AUC: {best_overall_auc:.4f}")
-    if best_overall_model is not None:
-        mlflow.sklearn.log_model(
-            best_overall_model, "best_model",
-            registered_model_name="BatiBankCreditRiskModel"
-        )
-        logging.info("Best model registered in MLflow Model Registry")
     return best_overall_model
 
 if __name__ == "__main__":

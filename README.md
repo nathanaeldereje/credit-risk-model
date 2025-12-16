@@ -124,7 +124,7 @@ credit-risk-model/
 - Optional: xverse or scorecardpy (for WoE/IV)
 
 ## Quick Start
-```bash
+```bash   
 # Clone the repository
 git clone https://github.com/your-username/credit-risk-model.git
 cd credit-risk-model
@@ -136,32 +136,71 @@ source .venv/bin/activate          # On Linux/Mac
 
 # Install dependencies
 pip install -r requirements.txt
+```
 
-# Place the raw Xente dataset in data/raw/data.csv
-# (Download from Kaggle: https://www.kaggle.com/competitions/xente-fraud-detection/data or provided link)
-# Step 1: Run feature engineering (Task 3)
-python src/data_processing.py
-# → Generates data/processed/customer_features.csv
 
-# Step 2: Create proxy target via RFM clustering (Task 4)
-python src/create_proxy_target.py
-# → Generates data/processed/customer_features_with_target.csv (or .parquet)
+Place the raw Xente dataset in data/raw/data.csv
+(Download from Kaggle: https://www.kaggle.com/competitions/xente-fraud-detection/data or provided link)
+- Step 1: Run feature engineering (Task 3)
+```bash 
+   python src/data_processing.py  # → Generates data/processed/customer_features.csv
+```
+
+
+- Step 2: Create proxy target via RFM clustering (Task 4)
+```bash 
+   python src/create_proxy_target.py # → Generates data/processed/customer_features_with_target.csv (or .parquet)
 #    with the binary target 'is_high_risk'
+```
 
-# Step 3: Train models with MLflow tracking (Task 5 - coming next)
-# python src/train.py
 
-# Step 4: Start the FastAPI service locally (Task 6 - coming next)
+
+- Step 3: Train models with MLflow tracking (Task 5)
+```bash 
+   python src/train.py
+```
+```bash 
+   mlflow ui
+```
+
+
+- Step 4: Start the FastAPI service locally (Task 6)
+```bash 
 # uvicorn src.api.main:app --reload
 ```
+
+---
+## Model Training Results (Task 5 Summary)
+
+Trained and compared two models using GridSearchCV and full MLflow tracking on the RFM-derived proxy target `is_high_risk`.
+
+### Final Performance Comparison
+
+| Metric          | Random Forest | Logistic Regression | Winner          |
+|-----------------|---------------|---------------------|-----------------|
+| Accuracy        | **0.9786**    | 0.9559              | Random Forest   |
+| Precision       | **0.9625**    | 0.9020              | Random Forest   |
+| Recall          | **0.9706**    | 0.9664              | Random Forest   |
+| F1 Score        | **0.9665**    | 0.9331              | Random Forest   |
+| ROC-AUC         | **0.9988**    | 0.9933              | Random Forest   |
+
+### Best Model: Random Forest
+- Parameters: `n_estimators=100`, `max_depth=None`, `min_samples_split=2`, `class_weight='balanced'`
+- **ROC-AUC = 0.9988** — outstanding discrimination
+- High precision and recall balance risk control with customer inclusion
+- Logged to MLflow experiment "Credit_Risk_Model_Experiment"
+- Best model artifact saved and ready for registry/deployment
+
+**Task 5: Fully Complete** — models trained, tuned, evaluated, and tracked.
+---
 ## Current Progress(as of December 15, 2025)
 | Task | Status | Notes |
 | :--- | :--- | :--- |
 | **Task 1 – Business Understanding** | ✅ Completed | README section written |
 | **Task 2 – EDA** | ✅ Completed | Notebook ready, key insights finalized |
 | **Task 3 – Feature Engineering** | ✅ Completed | Robust pipeline with aggregates, WoE/IV, logging |
-| **Task 4 – Proxy Target** | ✅ Completed | RFM clustering & high-risk label |
-| **Task 5 – Model Training** | 📅 Planned | MLflow setup + multiple models |
+| **Task 4 – Proxy Target** | ✅ Completed | RFM + K-Means → `is_high_risk` created                  |
+| **Task 5 – Model Training** | ✅ Completed | Logistic Regression + Random Forest, full MLflow tracking, hyperparameter tuning |
 | **Task 6 – Deployment & CI/CD** | 📅 Planned | FastAPI, Docker, GitHub Actions |
 
 Challenge completed – Dec 16 2025
