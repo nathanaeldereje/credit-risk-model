@@ -149,7 +149,7 @@ Place the raw Xente dataset in data/raw/data.csv
 
 - Step 2: Create proxy target via RFM clustering (Task 4)
 ```bash 
-   python src/create_proxy_target.py # → Generates data/processed/customer_features_with_target.csv (or .parquet)
+   python src/create_target.py # → Generates data/processed/customer_features_with_target.csv (or .parquet)
 #    with the binary target 'is_high_risk'
 ```
 
@@ -166,7 +166,7 @@ Place the raw Xente dataset in data/raw/data.csv
 
 - Step 4: Start the FastAPI service locally (Task 6)
 ```bash 
-# uvicorn src.api.main:app --reload
+   uvicorn src.api.main:app --reload
 ```
 
 ---
@@ -201,7 +201,7 @@ Trained and compared two models using GridSearchCV and full MLflow tracking on t
 | **Task 3 – Feature Engineering** | ✅ Completed | Robust pipeline with aggregates, WoE/IV, logging |
 | **Task 4 – Proxy Target** | ✅ Completed | RFM + K-Means → `is_high_risk` created                  |
 | **Task 5 – Model Training** | ✅ Completed | Logistic Regression + Random Forest, full MLflow tracking, hyperparameter tuning |
-| **Task 6 – Deployment & CI/CD** | 📅 Planned | FastAPI, Docker, GitHub Actions |
+| **Task 6 – Deployment & CI/CD** | ✅ Completed | FastAPI, Docker, GitHub Actions |
 
 Challenge completed – Dec 16 2025
 Built by Nathanael Dereje
