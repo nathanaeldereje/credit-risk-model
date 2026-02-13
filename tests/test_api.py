@@ -1,14 +1,20 @@
 from fastapi.testclient import TestClient
 from src.api.main import app
-import pytest
+import unittest.mock as mock
 
 client = TestClient(app)
 
-def test_read_root():
-    response = client.get("/")
+def test_health_check():
+    """Tests the health endpoint."""
+    response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"message": "Credit Risk API is running"}
+    # Match the logic in your main.py
+    assert "status" in response.json()
 
-# Note: Testing /predict usually requires a mocked model to avoid loading MLflow in CI
-# For simplicity in this assignment, we check basic startup. 
-# In a real scenario, you would mock load_best_model.
+def test_predict_endpoint_validation():
+    """
+    Tests that the API returns 422 Unprocessable Entity 
+    if we send an empty or bad payload (Pydantic validation).
+    """
+    response = client.post("/predict", json={})
+    assert response.status_code == 422

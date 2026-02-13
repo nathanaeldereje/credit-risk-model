@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 class CreditRiskRequest(BaseModel):
     # Numeric Features (Aggregated)
@@ -23,8 +23,8 @@ class CreditRiskRequest(BaseModel):
     ChannelId: str = Field(..., description="Most frequent Channel ID")
     PricingStrategy: str = Field(..., description="Pricing Strategy (as string)")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "total_transactions": 25,
                 "total_amount": 500000.0,
@@ -44,6 +44,7 @@ class CreditRiskRequest(BaseModel):
                 "PricingStrategy": "PricingStrategy_2"
             }
         }
+    )
 
 class CreditRiskResponse(BaseModel):
     risk_probability: float

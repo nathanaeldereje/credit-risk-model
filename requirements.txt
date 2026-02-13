@@ -15,6 +15,7 @@ ipykernel>=6.29.0
 
 # Testing & Quality (Required for CI)
 pytest>=8.3.0
+pytest-cov==7.0.0
 flake8>=7.1.0
 
 # (Add these later when you reach MLflow & FastAPI)
