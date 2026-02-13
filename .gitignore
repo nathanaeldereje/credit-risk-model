@@ -31,3 +31,5 @@ Thumbs.db
 mlruns/
 mlflow.db
 *.db  
+
+notebooks/test.ipynb
