@@ -1,106 +1,86 @@
-import sys
-import os
 import pandas as pd
 import mlflow.sklearn
+import logging
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
-from datetime import datetime
-
-
-# Add src to path to allow imports if needed
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-
+from src.credit_risk.config import AppConfig
 from src.api.pydantic_models import CreditRiskRequest, CreditRiskResponse
+
+# Setup simple logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Global variable to hold the model
 model = None
 
-def load_best_model():
-    """
-    Finds the best run from the local MLflow experiment and loads the model.
-    """
+def load_production_model():
+    """Finds the best model from the Production experiment."""
     try:
-        experiment_name = "Credit_Risk_Model_Experiment"
+        # TARGET THE NEW EXPERIMENT
+        experiment_name = "Credit_Risk_Production_Training"
         experiment = mlflow.get_experiment_by_name(experiment_name)
         
         if experiment is None:
-            raise ValueError(f"Experiment '{experiment_name}' not found.")
+            logger.error(f"Experiment '{experiment_name}' not found.")
+            return None
 
-        # Search for the best run based on ROC_AUC
+        # Get best run based on ROC-AUC
         runs = mlflow.search_runs(
             experiment_ids=[experiment.experiment_id],
-            order_by=["metrics.roc_auc DESC"]
+            order_by=["metrics.roc_auc DESC"],
+            max_results=1
         )
         
         if runs.empty:
-            raise ValueError("No runs found in the experiment.")
+            logger.error("No runs found in experiment.")
+            return None
             
         best_run_id = runs.iloc[0]["run_id"]
-        print(f"Loading best model from Run ID: {best_run_id}")
+        logger.info(f"Loading best model from Run ID: {best_run_id}")
         
-        # Load model using the specific run URI
-        logged_model_uri = f"runs:/{best_run_id}/model"
-        loaded_model = mlflow.sklearn.load_model(logged_model_uri)
-        return loaded_model
+        return mlflow.sklearn.load_model(f"runs:/{best_run_id}/model")
         
     except Exception as e:
-        print(f"Error loading model: {e}")
+        logger.error(f"Error loading model: {e}")
         return None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load model on startup
     global model
-    model = load_best_model()
-    if model is None:
-        print("WARNING: Model failed to load.")
+    model = load_production_model()
     yield
-    # Clean up on shutdown (if needed)
 
-app = FastAPI(title="Credit Risk Scoring API", lifespan=lifespan)
+app = FastAPI(title="Bati Bank Credit Risk API", lifespan=lifespan)
 
-@app.get("/")
-def read_root():
-    return {"message": "Credit Risk API is running"}
+@app.get("/health")
+def health():
+    return {"status": "ready" if model else "model_not_loaded"}
 
 @app.post("/predict", response_model=CreditRiskResponse)
-def predict_risk(request: CreditRiskRequest):
+def predict(request: CreditRiskRequest):
     if model is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
     
     try:
-        # Convert Pydantic model to DataFrame
-        # We must wrap it in a list to create a single-row DataFrame
-        input_data = pd.DataFrame([request.model_dump()])
-        # Approximate snapshot logic (same idea as training)
-        snapshot_date = pd.Timestamp(datetime.utcnow())
-
-        # You MUST have last_transaction_time logic
-        # Since API doesn't have history, we approximate recency using tx_day_mean
-        input_data["Recency"] = 30 - input_data["tx_day_mean"]  # proxy
-        input_data["Frequency"] = input_data["total_transactions"]
-        input_data["Monetary"] = input_data["total_amount"]
-
-        # Optional but expected
-        input_data["active_days"] = input_data["total_transactions"]
-        # Make Prediction
-        # The pipeline inside the model handles scaling/encoding automatically
-        prediction = model.predict(input_data)[0]
-        probability = model.predict_proba(input_data)[0][1] # Probability of Class 1 (High Risk)
+        # Convert request to DataFrame for the model pipeline
+        input_df = pd.DataFrame([request.model_dump()])
         
-        # Calculate a simple Credit Score (300-850 scale)
-        # Inverse of risk: Higher risk = Lower score
-        base_score = 850
-        risk_penalty = probability * 550 # If prob is 1.0, penalty is 550 -> score 300
-        credit_score = int(base_score - risk_penalty)
+        # The pipeline handles all scaling and OHE
+        prediction = int(model.predict(input_df)[0])
+        probability = float(model.predict_proba(input_df)[0][1])
+        
+        # Financial Standard Credit Score (300-850)
+        # Higher probability of risk = Lower credit score
+        credit_score = int(850 - (probability * 550))
         
         return {
             "risk_probability": round(probability, 4),
-            "is_high_risk": int(prediction),
+            "is_high_risk": prediction,
             "credit_score": credit_score
         }
         
     except Exception as e:
+        logger.error(f"Prediction error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

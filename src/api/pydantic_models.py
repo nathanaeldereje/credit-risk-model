@@ -11,11 +11,17 @@ class CreditRiskRequest(BaseModel):
     tx_hour_mean: float = Field(..., description="Average hour of transaction (0-23)")
     tx_day_mean: float = Field(..., description="Average day of month (1-31)")
     
+    # Engineered Features (Must match training set exactly)
+    active_days: int = Field(..., description="Tenure of the account in days")
+    Recency: int = Field(..., description="Days since last transaction")
+    Frequency: int = Field(..., description="Count of transactions (RFM version)")
+    Monetary: float = Field(..., description="Total volume (RFM version)")
+    
     # Categorical Features (Modes)
     ProviderId: str = Field(..., description="Most frequent Provider ID")
     ProductCategory: str = Field(..., description="Most frequent Product Category")
     ChannelId: str = Field(..., description="Most frequent Channel ID")
-    PricingStrategy: str = Field(..., description="Most frequent Pricing Strategy")
+    PricingStrategy: str = Field(..., description="Pricing Strategy (as string)")
 
     class Config:
         json_schema_extra = {
@@ -28,6 +34,10 @@ class CreditRiskRequest(BaseModel):
                 "total_refunds_count": 0,
                 "tx_hour_mean": 14.5,
                 "tx_day_mean": 15.0,
+                "active_days": 150,
+                "Recency": 2,
+                "Frequency": 25,
+                "Monetary": 500000.0,
                 "ProviderId": "ProviderId_6",
                 "ProductCategory": "financial_services",
                 "ChannelId": "ChannelId_3",
