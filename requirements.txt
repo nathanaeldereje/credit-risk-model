@@ -29,3 +29,5 @@ uvicorn[standard]>=0.30.0
 # additional
 pyarrow==14.0.1
 xverse
+
+shap==0.45.1

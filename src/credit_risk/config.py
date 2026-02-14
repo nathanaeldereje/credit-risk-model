@@ -44,3 +44,7 @@ class AppConfig:
         "classifier__n_estimators": [50, 100],
         "classifier__max_depth": [5, 10, None]
     })
+
+
+    # For shap
+    REPORTS_DIR: str = "reports/figures"
