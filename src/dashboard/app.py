@@ -25,7 +25,35 @@ st.set_page_config(
 )
 
 cfg = AppConfig()
-API_URL = "http://localhost:8000/predict"
+def get_active_api_url():
+    """
+    Detects if the backend is running locally or should use the cloud.
+    """
+    local_url = "http://localhost:8000"
+    render_url = "https://credit-risk-model-uuz3.onrender.com"
+    
+    # If we are running in Streamlit Cloud, 'localhost' won't exist.
+    # We do a quick 'ping' to the health endpoint.
+    try:
+        # 0.5s timeout: don't wait long if local isn't there
+        res = requests.get(f"{local_url}/health", timeout=0.5)
+        if res.status_code == 200:
+            return local_url
+    except:
+        pass
+    
+    return render_url
+
+# Initialize the URL
+BASE_URL = get_active_api_url()
+API_URL = f"{BASE_URL}/predict"  
+#API_URL = "http://localhost:8000/predict"
+
+# Display connection status in Sidebar
+st.sidebar.markdown(f"**API Status:** `{'Local' if 'localhost' in BASE_URL else 'Cloud'}`")
+if "onrender" in BASE_URL:
+    st.sidebar.info("☁️ Using Render Cloud API. First request may take 30s to wake up.")
+
 
 
 # ---------------------------------------------------
