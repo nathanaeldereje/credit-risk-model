@@ -14,9 +14,11 @@ __pycache__/
 
 # Data
 # === DATA FILES (never commit large files) ===
-data/
+data/**/*
+!data/processed/
 !data/raw/*.dvc           # ← ALLOW .dvc pointer files in raw
 !data/processed/*.dvc       # ← ALLOW .dvc pointer files in processed
+!data/processed/customer_features_with_target.csv
 !data/.gitkeep
 
 # OS
