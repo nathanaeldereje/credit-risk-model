@@ -31,3 +31,11 @@ pyarrow==14.0.1
 xverse
 
 shap==0.45.1
+
+
+
+# Visualization / UI
+streamlit==1.26.1      # latest stable for Python 3.12
+plotly==5.17.0         # compatible with Python 3.12, works with pandas 2.2
+streamlit-echarts==0.4.0
+

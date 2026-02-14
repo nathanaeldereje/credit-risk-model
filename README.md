@@ -96,25 +96,27 @@ credit-risk-model/
 ├── data/                      # Data directory (Git-ignored)
 │   ├── raw/                   # Raw transaction data
 │   └── processed/             # Aggregated customer features & targets
-├── notebooks/                 
+├── notebooks/                 # Exploratory Research
+│   └── eda.ipynb              # Initial Data Discovery
+├── reports/                   # Model Explainability (SHAP) reports
 │   └── figures/               # Global & Local explanation plots
-├── reports/                   # NEW: Model Explainability (SHAP) reports
-│   └── figures/               # Global & Local explanation plots
-├── scripts/                   # NEW: CLI Entry points for the pipeline
+├── scripts/                   # CLI Entry points for the pipeline
 │   ├── run_preprocessing.py   # Full data pipeline (Loading -> RFM -> Target)
 │   ├── run_training.py        # MLflow-tracked training & GridSearch
 │   └── run_explainability.py  # SHAP value generation
 ├── src/                       # Core Source Code
-│   ├── credit_risk/           # Core Logic Package
+│   ├── credit_risk/           # Core Logic Package (The "Engine")
 │   │   ├── config.py          # Dataclasses & centralized constants
-│   │   ├── processing.py      # Modular transaction & aggregation logic
+│   │   ├── processing.py      # Modular transaction logic
 │   │   ├── features.py        # RFM & Clustering (Target Engineering)
 │   │   ├── model.py           # Training logic & validation metrics
 │   │   ├── explainability.py  # SHAP logic for pipeline models
 │   │   └── utils.py           # Logging & I/O helpers
-│   └── api/                   # FastAPI Application
-│       ├── main.py            # API routes & model loading logic
-│       └── pydantic_models.py # Pydantic V2 data validation
+│   ├── api/                   # Backend: FastAPI Application
+│   │   ├── main.py            # API routes & model loading logic
+│   │   └── pydantic_models.py # Pydantic V2 data validation
+│   └── dashboard/             # NEW: Frontend: Streamlit Application
+│       └── app.py             # Interactive UI & Risk Simulator
 ├── tests/                     # 14+ Unit & Integration Tests
 └── requirements.txt           # Project dependencies
 ```
@@ -122,9 +124,11 @@ credit-risk-model/
 - **Core:** Python 3.12, Pandas, NumPy
 - **ML & Explainability:** Scikit-learn, **SHAP** (SHapley Additive exPlanations)
 - **Tracking:** MLflow (Experiment tracking with Model Signatures)
-- **API:** FastAPI (Pydantic V2), Uvicorn
-- **DevOps:** Docker, GitHub Actions, Pytest-cov (Coverage Tracking)
-- **Quality:** Flake8 (Linting), Type Hinting, Dataclasses
+- **API (Backend):** FastAPI (Pydantic V2), Uvicorn
+- **Dashboard (Frontend):** **Streamlit**, Requests
+- **DevOps:** Docker, GitHub Actions, Pytest-cov
+- **Quality:** Flake8, Type Hinting, Dataclasses
+
 
 ## Quick Start
 ```bash   
@@ -141,17 +145,12 @@ source .venv/bin/activate          # On Linux/Mac
 pip install -r requirements.txt
 ```
 
+## Execution Pipeline
 
-### Execution Pipeline
-The project follows a modular execution flow. Ensure the raw data is at `data/raw/data.csv`.
+**Step 0: Exploratory Data Analysis (EDA)**  
+Review `notebooks/eda.ipynb` for initial data validation, distributions, and outlier detection.
 
-
-**Exploratory Data Analysis (EDA):** `notebooks/eda.ipynb`
-Performs initial data validation and exploratory analysis (summary statistics, distributions, correlations, missing values, and outlier detection). Research-only; not part of the production pipeline.
-
-
-
-**1. Data Pipeline & Target Engineering** (RFM + K-Means)
+**Step 1: Data Pipeline & Target Engineering**
 ```bash 
 python -m scripts.run_preprocessing
 ```
@@ -159,22 +158,23 @@ python -m scripts.run_preprocessing
 **2. Production Training & MLflow Tracking**
 ```bash 
 python -m scripts.run_training
-# View experiments
-mlflow ui
 ```
 
 **3. Generate Explainability Reports (SHAP)**
 ```bash 
 python -m scripts.run_explainability
-# Check reports/figures/ for Waterfall and Summary plots
 ```
 
-**4. Start the Production API**
+**4. Start the Backend API**
 ```bash 
 uvicorn src.api.main:app --reload
-# Access Swagger UI at http://127.0.0.1:8000/docs
 ```
 
+**5. Launch the Interactive Dashboard**
+```bash 
+# Ensure the API is running in another terminal
+streamlit run src/dashboard/app.py
+```
 ---
 
 ## Model Training Results (Production Upgrade)
