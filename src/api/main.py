@@ -1,3 +1,5 @@
+import os
+import joblib
 import pandas as pd
 import mlflow.sklearn
 import logging
@@ -15,34 +17,37 @@ model = None
 
 def load_production_model():
     """Finds the best model from the Production experiment."""
-    try:
-        # TARGET THE NEW EXPERIMENT
-        experiment_name = "Credit_Risk_Production_Training"
-        experiment = mlflow.get_experiment_by_name(experiment_name)
-        
-        if experiment is None:
-            logger.error(f"Experiment '{experiment_name}' not found.")
-            return None
-
-        # Get best run based on ROC-AUC
-        runs = mlflow.search_runs(
-            experiment_ids=[experiment.experiment_id],
-            order_by=["metrics.roc_auc DESC"],
-            max_results=1
-        )
-        
-        if runs.empty:
-            logger.error("No runs found in experiment.")
-            return None
+    if os.path.exists("models/credit_risk_model.joblib"):
+        return joblib.load("models/credit_risk_model.joblib")
+    else:
+        try:
+            # TARGET THE NEW EXPERIMENT
+            experiment_name = "Credit_Risk_Production_Training"
+            experiment = mlflow.get_experiment_by_name(experiment_name)
             
-        best_run_id = runs.iloc[0]["run_id"]
-        logger.info(f"Loading best model from Run ID: {best_run_id}")
-        
-        return mlflow.sklearn.load_model(f"runs:/{best_run_id}/model")
-        
-    except Exception as e:
-        logger.error(f"Error loading model: {e}")
-        return None
+            if experiment is None:
+                logger.error(f"Experiment '{experiment_name}' not found.")
+                return None
+
+            # Get best run based on ROC-AUC
+            runs = mlflow.search_runs(
+                experiment_ids=[experiment.experiment_id],
+                order_by=["metrics.roc_auc DESC"],
+                max_results=1
+            )
+            
+            if runs.empty:
+                logger.error("No runs found in experiment.")
+                return None
+                
+            best_run_id = runs.iloc[0]["run_id"]
+            logger.info(f"Loading best model from Run ID: {best_run_id}")
+            
+            return mlflow.sklearn.load_model(f"runs:/{best_run_id}/model")
+            
+        except Exception as e:
+            logger.error(f"Error loading model: {e}")
+            return None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
