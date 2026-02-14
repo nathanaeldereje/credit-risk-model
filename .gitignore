@@ -29,6 +29,7 @@ Thumbs.db
 
 # MLflow
 mlruns/
+runs
 mlflow.db
 *.db  
 
