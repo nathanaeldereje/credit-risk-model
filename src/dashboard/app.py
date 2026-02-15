@@ -50,11 +50,20 @@ API_URL = f"{BASE_URL}/predict"
 #API_URL = "http://localhost:8000/predict"
 
 # Display connection status in Sidebar
-st.sidebar.markdown(f"**API Status:** `{'Local' if 'localhost' in BASE_URL else 'Cloud'}`")
-if "onrender" in BASE_URL:
-    st.sidebar.info("☁️ Using Render Cloud API. First request may take 30s to wake up.")
+st.sidebar.markdown(f"**API: :** `{'Local' if 'localhost' in BASE_URL else 'Cloud'}`")
+# if "onrender" in BASE_URL:
+#     st.sidebar.info("Using Render Cloud API. First request may take 30s to wake up.")
 
+if "show_api_status" not in st.session_state:
+    st.session_state.show_api_status = True
 
+if st.session_state.show_api_status:
+    if "onrender" in BASE_URL:
+        st.info("Using Render Cloud API. First request may take 30s to wake up.")
+
+    if st.button("✖ Close", key="close_api_status"):
+        st.session_state.show_api_status = False
+        st.rerun()
 
 # ---------------------------------------------------
 # Custom Styling (Professional Look)

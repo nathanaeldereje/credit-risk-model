@@ -2,8 +2,8 @@
 **Bati Bank – Buy-Now-Pay-Later Credit Scoring Project**  
 *December 2025*
 
-An end-to-end machine learning project to build, deploy, and automate a credit risk model using alternative transactional data from an eCommerce partner. The model estimates default probability for BNPL customers using RFM-derived features and behavioral signals.
-
+An end-to-end machine learning project to build, deploy, and automate a credit risk model using alternative transactional data from an eCommerce partner. The model estimates default probability for BNPL customers using RFM-derived features and behavioral signals.    
+Deployed Output: https://credit-risk-model-3zqyyrjpsbg66xzfpgf8nv.streamlit.app/
 ---
 ## Business Goal
 Bati Bank is launching a Buy-Now-Pay-Later (BNPL) service in partnership with a leading eCommerce platform. To approve loans responsibly while expanding financial inclusion, we need a credit scoring model that:
@@ -24,7 +24,14 @@ We engineer a **proxy target variable** for credit risk (high-risk vs. low-risk 
 - [ ] CI/CD pipeline with linting and unit tests
 - [ ] Full documentation and reproducible environment
 
+## 🚀 Live Demo
+
+**Interactive Dashboard:**  
+https://credit-risk-model-3zqyyrjpsbg66xzfpgf8nv.streamlit.app/
+
+
 ---
+
 ## Credit Scoring Business Understanding
 *(Task 1 Analysis)*
 
@@ -198,7 +205,7 @@ After refactoring the codebase and incorporating tenure-based features (`active_
 
 **Task 5: Fully Complete** — models trained, tuned, evaluated, and tracked.
 ---
-## Current Progress(as of December 15, 2025)
+## Current Progress
 | Task | Status | Notes |
 | :--- | :--- | :--- |
 | **Task 1 – Business Understanding** | ✅ Completed | README section written |
@@ -208,5 +215,5 @@ After refactoring the codebase and incorporating tenure-based features (`active_
 | **Task 5 – Model Training** | ✅ Completed | Logistic Regression + Random Forest, full MLflow tracking, hyperparameter tuning |
 | **Task 6 – Deployment & CI/CD** | ✅ Completed | FastAPI, Docker, GitHub Actions |
 
-Challenge completed – Dec 16 2025
+<!-- Challenge completed – Dec 16 2025 -->
 Built by Nathanael Dereje
