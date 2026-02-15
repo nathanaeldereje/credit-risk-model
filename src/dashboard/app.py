@@ -50,7 +50,7 @@ API_URL = f"{BASE_URL}/predict"
 #API_URL = "http://localhost:8000/predict"
 
 # Display connection status in Sidebar
-st.sidebar.markdown(f"**API: :** `{'Local' if 'localhost' in BASE_URL else 'Cloud'}`")
+st.sidebar.markdown(f"**API :** `{'Local' if 'localhost' in BASE_URL else 'Cloud'}`")
 # if "onrender" in BASE_URL:
 #     st.sidebar.info("Using Render Cloud API. First request may take 30s to wake up.")
 import streamlit as st
@@ -60,18 +60,17 @@ if "show_api_status" not in st.session_state:
     st.session_state.show_api_status = True
 
 if st.session_state.show_api_status and "onrender" in BASE_URL:
-    container = st.container()  # placeholder for inline layout
-    col1, col2 = container.columns([20, 1])  # make col1 wide, col2 narrow
+    # Using st.info as a popup-like message
+    message_container = st.empty()  # placeholder for the message
 
-    with col1:
-        st.info("Using Render Cloud API. First request may take 30s to wake up.")
-
-    with col2:
-        if st.button("✖", key="close_api_status"):
+    with message_container:
+        st.info(
+            "Using Render Cloud API. First request may take 30s to wake up.",
+            icon="ℹ️"  # optional info icon
+        )
+        if st.button("Dismiss", key="dismiss_api_status"):
             st.session_state.show_api_status = False
-            st.experimental_rerun()
-
-
+            message_container.empty()  # remove the message
 # ---------------------------------------------------
 # Custom Styling (Professional Look)
 # ---------------------------------------------------
