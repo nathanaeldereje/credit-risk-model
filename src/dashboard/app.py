@@ -53,17 +53,24 @@ API_URL = f"{BASE_URL}/predict"
 st.sidebar.markdown(f"**API: :** `{'Local' if 'localhost' in BASE_URL else 'Cloud'}`")
 # if "onrender" in BASE_URL:
 #     st.sidebar.info("Using Render Cloud API. First request may take 30s to wake up.")
+import streamlit as st
 
+# Initialize session state
 if "show_api_status" not in st.session_state:
     st.session_state.show_api_status = True
 
-if st.session_state.show_api_status:
-    if "onrender" in BASE_URL:
+if st.session_state.show_api_status and "onrender" in BASE_URL:
+    container = st.container()  # placeholder for inline layout
+    col1, col2 = container.columns([20, 1])  # make col1 wide, col2 narrow
+
+    with col1:
         st.info("Using Render Cloud API. First request may take 30s to wake up.")
 
-    if st.button("✖ Close", key="close_api_status"):
-        st.session_state.show_api_status = False
-        st.rerun()
+    with col2:
+        if st.button("✖", key="close_api_status"):
+            st.session_state.show_api_status = False
+            st.experimental_rerun()
+
 
 # ---------------------------------------------------
 # Custom Styling (Professional Look)
