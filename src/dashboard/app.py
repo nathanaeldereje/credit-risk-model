@@ -8,6 +8,7 @@ import requests
 import matplotlib.pyplot as plt
 import mlflow.sklearn
 import shap
+import streamlit.components.v1 as components
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from src.credit_risk.config import AppConfig
@@ -60,17 +61,38 @@ if "show_api_status" not in st.session_state:
     st.session_state.show_api_status = True
 
 if st.session_state.show_api_status and "onrender" in BASE_URL:
-    # Using st.info as a popup-like message
-    message_container = st.empty()  # placeholder for the message
+    components.html(
+    """
+    <div id="info-box" style="
+        padding:15px 20px;
+        background-color:#d1ecf1;
+        border:1px solid #bee5eb;
+        border-radius:8px;
+        box-shadow:0 4px 6px rgba(0,0,0,0.1);
+        max-width:900px;
+        margin: 2rem auto 0 auto;  /* 2rem from top, auto left/right, 0 bottom */
+        font-family: Arial, sans-serif;
+        font-size:16px;
+        color:#0c5460;
+        position:relative;
+    ">
+        Using Render Cloud API. First request may take 30s to wake up.
+        <button onclick="document.getElementById('info-box').style.display='none';" 
+                style="
+                    position:absolute; top:8px; right:12px; 
+                    border:none; background:none; 
+                    font-weight:bold; cursor:pointer; font-size:18px; 
+                    color:#0c5460;
+                ">
+            ×
+        </button>
+    </div>
+    """,
+    height=120
+)
 
-    with message_container:
-        st.info(
-            "Using Render Cloud API. First request may take 30s to wake up.",
-            icon="ℹ️"  # optional info icon
-        )
-        if st.button("Dismiss", key="dismiss_api_status"):
-            st.session_state.show_api_status = False
-            message_container.empty()  # remove the message
+
+
 # ---------------------------------------------------
 # Custom Styling (Professional Look)
 # ---------------------------------------------------
