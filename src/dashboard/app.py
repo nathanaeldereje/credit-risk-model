@@ -6,6 +6,8 @@ import pandas as pd
 import numpy as np
 import requests
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.express as px
 import mlflow.sklearn
 import shap
 import streamlit.components.v1 as components
@@ -195,11 +197,14 @@ st.caption("Real-time credit risk scoring with model explainability")
 
 
 # ---------------------------------------------------
-# API Prediction
+# API Prediction with Cold-Start Handling
 # ---------------------------------------------------
 with st.spinner("Analyzing credit profile..."):
+    # Determine timeout: 45s for Cloud (Render wake-up), 5s for Local
+    request_timeout = 50 if "onrender" in BASE_URL else 5
+    
     try:
-        response = requests.post(API_URL, json=payload, timeout=5)
+        response = requests.post(API_URL, json=payload, timeout=request_timeout)
 
         if response.status_code == 200:
             result = response.json()
@@ -211,13 +216,22 @@ with st.spinner("Analyzing credit profile..."):
             st.error(f"API Error: {response.status_code}")
             st.stop()
 
+    except requests.exceptions.ReadTimeout:
+        st.error(
+            "⏳ **Cloud API is waking up...**\n\n"
+            "Render's free tier sleeps after inactivity. "
+            "It usually takes 30-45 seconds to start. Please wait a moment and **refresh the page**."
+        )
+        st.button("Retry Connection") # Clicking this triggers a rerun
+        st.stop()
+        
     except requests.exceptions.ConnectionError:
         st.error(
-            "API is Offline. Please start the FastAPI server using:\n\n"
+            "🚨 **Connection Failed**\n\n"
+            "Could not connect to the backend. If running locally, start the server with:\n"
             "`uvicorn src.api.main:app --reload`"
         )
         st.stop()
-
 
 # ---------------------------------------------------
 # Results Section
@@ -259,6 +273,32 @@ with col2:
     st.pyplot(fig)
 
 
+
+
+# --- NEW: PEER COMPARISON SECTION (After the SHAP plot) ---
+st.divider()
+st.subheader("👥 Peer Comparison (Benchmarking)")
+p_col1, p_col2 = st.columns(2)
+
+with p_col1:
+    # Distribution of Monetary Values
+    fig_monetary = px.histogram(df, x="Monetary", title="Monetary Distribution vs. Applicant",
+                                color_discrete_sequence=['#cbd5e0'])
+    # Add vertical line for current applicant
+    fig_monetary.add_vline(x=payload['Monetary'], line_width=4, line_dash="dash", line_color="red")
+    fig_monetary.add_annotation(x=payload['Monetary'], text="Current Applicant", showarrow=True, arrowhead=1)
+    st.plotly_chart(fig_monetary, use_container_width=True)
+    st.caption("How the current applicant's transaction volume ranks against existing customers.")
+
+with p_col2:
+    # Tenure Box Plot
+    fig_tenure = px.box(df, y="active_days", title="Account Tenure Benchmarking",
+                        color_discrete_sequence=['#4a5568'])
+    # Add a point for the current user
+    fig_tenure.add_trace(go.Scatter(x=[0], y=[payload['active_days']], mode='markers',
+                                    marker=dict(color='red', size=15), name="Current Applicant"))
+    st.plotly_chart(fig_tenure, use_container_width=True)
+    st.info(f"Applicant Tenure: {payload['active_days']} days (Median: {int(df['active_days'].median())} days)")
 # ---------------------------------------------------
 # Portfolio Overview
 # ---------------------------------------------------
