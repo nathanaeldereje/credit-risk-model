@@ -1,0 +1,307 @@
+import os
+import sys
+import joblib
+import streamlit as st
+import pandas as pd
+import numpy as np
+import requests
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.express as px
+import mlflow.sklearn
+import shap
+import streamlit.components.v1 as components
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from src.credit_risk.config import AppConfig
+from src.credit_risk.utils import load_csv
+from src.credit_risk.explainability import RiskExplainer
+
+
+# ---------------------------------------------------
+# Page Configuration
+# ---------------------------------------------------
+st.set_page_config(
+    page_title="Credit Risk Intelligence",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+cfg = AppConfig()
+def get_active_api_url():
+    """
+    Detects if the backend is running locally or should use the cloud.
+    """
+    local_url = "http://localhost:8000"
+    render_url = "https://credit-risk-model-uuz3.onrender.com"
+    
+    # If we are running in Streamlit Cloud, 'localhost' won't exist.
+    # We do a quick 'ping' to the health endpoint.
+    try:
+        # 0.5s timeout: don't wait long if local isn't there
+        res = requests.get(f"{local_url}/health", timeout=0.5)
+        if res.status_code == 200:
+            return local_url
+    except:
+        pass
+    
+    return render_url
+
+# Initialize the URL
+BASE_URL = get_active_api_url()
+API_URL = f"{BASE_URL}/predict"  
+#API_URL = "http://localhost:8000/predict"
+
+# Display connection status in Sidebar
+st.sidebar.markdown(f"**API :** `{'Local' if 'localhost' in BASE_URL else 'Cloud'}`")
+# if "onrender" in BASE_URL:
+#     st.sidebar.info("Using Render Cloud API. First request may take 30s to wake up.")
+import streamlit as st
+
+# Initialize session state
+if "show_api_status" not in st.session_state:
+    st.session_state.show_api_status = True
+
+if st.session_state.show_api_status and "onrender" in BASE_URL:
+    components.html(
+    """
+    <div id="info-box" style="
+        padding:15px 20px;
+        background-color:#d1ecf1;
+        border:1px solid #bee5eb;
+        border-radius:8px;
+        box-shadow:0 4px 6px rgba(0,0,0,0.1);
+        max-width:900px;
+        margin: 2rem auto 0 auto;  /* 2rem from top, auto left/right, 0 bottom */
+        font-family: Arial, sans-serif;
+        font-size:16px;
+        color:#0c5460;
+        position:relative;
+    ">
+        Using Render Cloud API. First request may take 30s to wake up.
+        <button onclick="document.getElementById('info-box').style.display='none';" 
+                style="
+                    position:absolute; top:8px; right:12px; 
+                    border:none; background:none; 
+                    font-weight:bold; cursor:pointer; font-size:18px; 
+                    color:#0c5460;
+                ">
+            ×
+        </button>
+    </div>
+    """,
+    height=120
+)
+
+
+
+# ---------------------------------------------------
+# Custom Styling (Professional Look)
+# ---------------------------------------------------
+st.markdown("""
+<style>
+.block-container {
+    padding-top: 2rem;
+}
+h1 {
+    font-weight: 700 !important;
+}
+.stMetric {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+# ---------------------------------------------------
+# Load Resources (Cached)
+# ---------------------------------------------------
+@st.cache_resource
+def load_resources():
+    df = load_csv(cfg.FINAL_DATA_PATH)
+
+     # CLOUD DEPLOYMENT LOGIC:
+    # Try to load the standalone file first (for Streamlit Cloud)
+    # If not found, try to load from MLflow (for local dev)
+    model_path = "models/credit_risk_model.joblib"
+    
+    if os.path.exists(model_path):
+        model = joblib.load(model_path)
+    else:
+        # Fallback to MLflow for local development
+        experiment = mlflow.get_experiment_by_name("Credit_Risk_Production_Training")
+        runs = mlflow.search_runs(experiment.experiment_id, order_by=["metrics.roc_auc DESC"])
+        best_run_id = runs.iloc[0].run_id
+        model = mlflow.sklearn.load_model(f"runs:/{best_run_id}/model")
+    
+    explainer = RiskExplainer(model, []) 
+    return df, model, explainer
+
+
+df, model, explainer = load_resources()
+
+
+# ---------------------------------------------------
+# Sidebar – Risk Simulator
+# ---------------------------------------------------
+st.sidebar.markdown("## Credit Risk Simulator")
+
+def get_user_inputs():
+    st.sidebar.markdown("### Financial Profile")
+    total_amount = st.sidebar.number_input("Total Amount", value=5000.0)
+    avg_amount = st.sidebar.number_input("Average Amount", value=500.0)
+
+    st.sidebar.markdown("### Behavioral Profile")
+    total_tx = st.sidebar.slider("Total Transactions", 1, 100, 10)
+    active_days = st.sidebar.slider("Tenure (Days)", 1, 365, 30)
+    recency = st.sidebar.slider("Recency (Days)", 0, 30, 5)
+
+    st.sidebar.markdown("### Categorical Attributes")
+    provider = st.sidebar.selectbox("Provider", df['ProviderId'].unique())
+    category = st.sidebar.selectbox("Category", df['ProductCategory'].unique())
+    channel = st.sidebar.selectbox("Channel", df['ChannelId'].unique())
+    pricing = st.sidebar.selectbox("Pricing Strategy", df['PricingStrategy'].unique())
+
+    payload = {
+        "total_transactions": int(total_tx),
+        "total_amount": float(total_amount),
+        "avg_amount": float(avg_amount),
+        "std_amount": float(avg_amount * 0.1),
+        "avg_fee_paid": 10.0,
+        "total_refunds_count": 0,
+        "tx_hour_mean": 12.0,
+        "tx_day_mean": 15.0,
+        "active_days": int(active_days),
+        "Recency": int(recency),
+        "Frequency": int(total_tx),
+        "Monetary": float(total_amount),
+        "ProviderId": str(provider),
+        "ProductCategory": str(category),
+        "ChannelId": str(channel),
+        "PricingStrategy": str(pricing)
+    }
+
+    return payload
+
+
+payload = get_user_inputs()
+
+
+# ---------------------------------------------------
+# Main Dashboard Header
+# ---------------------------------------------------
+st.title("Credit Risk Intelligence Dashboard")
+st.caption("Real-time credit risk scoring with model explainability")
+
+
+# ---------------------------------------------------
+# API Prediction with Cold-Start Handling
+# ---------------------------------------------------
+with st.spinner("Analyzing credit profile..."):
+    # Determine timeout: 45s for Cloud (Render wake-up), 5s for Local
+    request_timeout = 50 if "onrender" in BASE_URL else 5
+    
+    try:
+        response = requests.post(API_URL, json=payload, timeout=request_timeout)
+
+        if response.status_code == 200:
+            result = response.json()
+            score = result['credit_score']
+            prob = result['risk_probability']
+            is_high_risk = result['is_high_risk']
+            api_status = "Connected"
+        else:
+            st.error(f"API Error: {response.status_code}")
+            st.stop()
+
+    except requests.exceptions.ReadTimeout:
+        st.error(
+            "⏳ **Cloud API is waking up...**\n\n"
+            "Render's free tier sleeps after inactivity. "
+            "It usually takes 30-45 seconds to start. Please wait a moment and **refresh the page**."
+        )
+        st.button("Retry Connection") # Clicking this triggers a rerun
+        st.stop()
+        
+    except requests.exceptions.ConnectionError:
+        st.error(
+            "🚨 **Connection Failed**\n\n"
+            "Could not connect to the backend. If running locally, start the server with:\n"
+            "`uvicorn src.api.main:app --reload`"
+        )
+        st.stop()
+
+# ---------------------------------------------------
+# Results Section
+# ---------------------------------------------------
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    st.subheader("Decision Outcome")
+
+    if is_high_risk == 0:
+        st.success("Approved")
+    else:
+        st.error("Rejected")
+
+    st.metric("Credit Score", f"{score}")
+    st.metric("Risk Probability", f"{prob:.2%}")
+    st.caption(f"API Status: {api_status}")
+
+
+with col2:
+    st.subheader("Model Explainability (SHAP Waterfall)")
+
+    input_df = pd.DataFrame([payload])
+    shap_vals, X_trans = explainer.generate_shap_values(input_df)
+
+    base_val = explainer.explainer.expected_value
+    if isinstance(base_val, (list, np.ndarray)):
+        base_val = base_val[1]
+
+    explanation = shap.Explanation(
+        values=shap_vals[0],
+        base_values=base_val,
+        data=X_trans[0],
+        feature_names=explainer.transformed_feature_names
+    )
+
+    fig = plt.figure()
+    shap.plots.waterfall(explanation, show=False)
+    st.pyplot(fig)
+
+
+
+
+# --- NEW: PEER COMPARISON SECTION (After the SHAP plot) ---
+st.divider()
+st.subheader("👥 Peer Comparison (Benchmarking)")
+p_col1, p_col2 = st.columns(2)
+
+with p_col1:
+    # Distribution of Monetary Values
+    fig_monetary = px.histogram(df, x="Monetary", title="Monetary Distribution vs. Applicant",
+                                color_discrete_sequence=['#cbd5e0'])
+    # Add vertical line for current applicant
+    fig_monetary.add_vline(x=payload['Monetary'], line_width=4, line_dash="dash", line_color="red")
+    fig_monetary.add_annotation(x=payload['Monetary'], text="Current Applicant", showarrow=True, arrowhead=1)
+    st.plotly_chart(fig_monetary, use_container_width=True)
+    st.caption("How the current applicant's transaction volume ranks against existing customers.")
+
+with p_col2:
+    # Tenure Box Plot
+    fig_tenure = px.box(df, y="active_days", title="Account Tenure Benchmarking",
+                        color_discrete_sequence=['#4a5568'])
+    # Add a point for the current user
+    fig_tenure.add_trace(go.Scatter(x=[0], y=[payload['active_days']], mode='markers',
+                                    marker=dict(color='red', size=15), name="Current Applicant"))
+    st.plotly_chart(fig_tenure, use_container_width=True)
+    st.info(f"Applicant Tenure: {payload['active_days']} days (Median: {int(df['active_days'].median())} days)")
+# ---------------------------------------------------
+# Portfolio Overview
+# ---------------------------------------------------
+st.divider()
+st.subheader("Portfolio Risk Distribution")
+st.bar_chart(df['is_high_risk'].value_counts())

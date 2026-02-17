@@ -1,13 +1,31 @@
 version: '3.8'
 
 services:
+  # Backend API
   api:
     build: .
     container_name: credit_risk_api
     ports:
       - "8000:8000"
     volumes:
-      # Mount mlruns so the container can see the local trained models
       - ./mlruns:/app/mlruns
+      - ./models:/app/models
     environment:
       - MLFLOW_TRACKING_URI=file:///app/mlruns
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Dashboard
+  dashboard:
+    build: .
+    container_name: credit_risk_dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://api:8000/predict # Points to the 'api' service name
+    command: ["streamlit", "run", "src/dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    depends_on:
+      - api
